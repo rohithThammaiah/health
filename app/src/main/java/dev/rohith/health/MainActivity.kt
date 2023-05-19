@@ -12,6 +12,8 @@ import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.mvrx.Mavericks
 import com.airbnb.mvrx.compose.collectAsState
+import com.airbnb.mvrx.compose.mavericksActivityViewModel
+import com.airbnb.mvrx.compose.mavericksViewModel
 import dev.rohith.health.HealthKitManager.Companion.PERMISSIONS
 import dev.rohith.health.ui.theme.HealthTheme
 import kotlinx.coroutines.launch
@@ -34,6 +36,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             HealthTheme {
+                val homeViewModel: HomeViewModel = mavericksActivityViewModel()
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -42,7 +45,7 @@ class MainActivity : ComponentActivity() {
                     HomeScreen(
                         allowPermission = {
                             lifecycleScope.launch {
-                                // healthKitManager.checkPermissionsAndRun(homeViewModel.healthConnectClient, requestPermissions)
+                                homeViewModel.healthKitManager.checkPermissionsAndRun(homeViewModel.healthConnectClient, requestPermissions)
                             }
                         })
                 }

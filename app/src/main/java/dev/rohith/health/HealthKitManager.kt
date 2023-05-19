@@ -1,15 +1,19 @@
 package dev.rohith.health
 
 import android.content.Context
+import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.DistanceRecord
+import androidx.health.connect.client.records.ExerciseSessionRecord
+import androidx.health.connect.client.records.ExerciseSessionRecord.Companion.EXERCISE_TYPE_INT_TO_STRING_MAP
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.request.AggregateRequest
+import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import arrow.core.Either
 import arrow.core.raise.either
@@ -41,19 +45,31 @@ class HealthKitManager(
             HealthPermission.getReadPermission(DistanceRecord::class),
             HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
             HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
+            HealthPermission.getReadPermission(ExerciseSessionRecord::class),
         )
     }
 
-    suspend fun isPermissionsGranted(healthConnectClient: HealthConnectClient,): Boolean {
+    suspend fun isPermissionsGranted(healthConnectClient: HealthConnectClient): Boolean {
         val granted = healthConnectClient.permissionController.getGrantedPermissions()
         return granted.containsAll(PERMISSIONS)
     }
 
-    suspend fun aggregateDistance(
+    suspend fun checkPermissionsAndRun(
+        healthConnectClient: HealthConnectClient,
+        requestPermissions: ActivityResultLauncher<Set<String>>
+    ) {
+        val granted = healthConnectClient.permissionController.getGrantedPermissions()
+        if (granted.containsAll(PERMISSIONS)) {
+        } else {
+            requestPermissions.launch(PERMISSIONS)
+        }
+    }
+
+    suspend fun readStats(
         healthConnectClient: HealthConnectClient,
         startTime: Instant,
         endTime: Instant
-    ) = either<Throwable, HealthRecord>{
+    ) = either<Throwable, HealthRecord> {
         try {
             val response = healthConnectClient.aggregate(
                 AggregateRequest(
@@ -71,8 +87,10 @@ class HealthKitManager(
             // The result may be null if no data is available in the time range.
             val distanceTotalInMeters = response[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0.0
             val stepsRecord = response[StepsRecord.COUNT_TOTAL] ?: 0L
-            val activeCaloriesBurnedRecord = response[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories ?: 0.0
-            val totalCaloriesBurnedRecord = response[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: 0.0
+            val activeCaloriesBurnedRecord =
+                response[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories ?: 0.0
+            val totalCaloriesBurnedRecord =
+                response[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: 0.0
             // The result may be null if no data is available in the time range.
             val minimumHeartRate = response[HeartRateRecord.BPM_MIN]
             val maximumHeartRate = response[HeartRateRecord.BPM_MAX] ?: 0L
@@ -89,37 +107,42 @@ class HealthKitManager(
         }
     }
 
-    suspend fun aggregateHeartRate(
+    suspend fun readActivities(
         healthConnectClient: HealthConnectClient,
         startTime: Instant,
         endTime: Instant
-    ) {
-        try {
-            val response =
-                healthConnectClient.aggregate(
-                    AggregateRequest(
-                        setOf(HeartRateRecord.BPM_MAX, HeartRateRecord.BPM_MIN),
-                        timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
-                    )
+    ): MutableList<ActivityRecord> {
+        val response =
+            healthConnectClient.readRecords(
+                ReadRecordsRequest(
+                    ExerciseSessionRecord::class,
+                    timeRangeFilter = TimeRangeFilter.between(startTime, endTime),
+                    ascendingOrder = false,
                 )
-            // The result may be null if no data is available in the time range.
-            val minimumHeartRate = response[HeartRateRecord.BPM_MIN]
-            val maximumHeartRate = response[HeartRateRecord.BPM_MAX]
-        } catch (e: Exception) {
-            // Run error handling here.
+            )
+
+
+        val activities = mutableListOf<ActivityRecord>()
+
+        for (exerciseRecord in response.records) {
+            val healthRecord =
+                readStats(healthConnectClient, exerciseRecord.startTime, exerciseRecord.endTime)
+            val activityRecord = ActivityRecord(
+                id = exerciseRecord.exerciseType,
+                type = EXERCISE_TYPE_INT_TO_STRING_MAP[exerciseRecord.exerciseType]?.uppercase() ?: "Exercise",
+                healthRecord = healthRecord.getOrNull().orEmptyRecord()
+            )
+            activities.add(activityRecord)
+            Log.e("HealthKitManager", healthRecord.toString())
+            Log.e("HealthKitManager", activityRecord.toString())
         }
-    }
-
-
-
-    suspend fun checkPermissionsAndRun(
-        healthConnectClient: HealthConnectClient,
-        requestPermissions: ActivityResultLauncher<Set<String>>
-    ) {
-        val granted = healthConnectClient.permissionController.getGrantedPermissions()
-        if (granted.containsAll(PERMISSIONS)) {
-        } else {
-            requestPermissions.launch(PERMISSIONS)
-        }
+        return activities
     }
 }
+
+
+data class ActivityRecord(
+    val id: Int,
+    val type: String,
+    val healthRecord: HealthRecord
+)

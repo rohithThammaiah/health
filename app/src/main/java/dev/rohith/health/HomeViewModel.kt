@@ -1,10 +1,6 @@
 package dev.rohith.health
 
-import androidx.compose.ui.focus.FocusDirection.Companion.In
-import androidx.compose.ui.platform.LocalContext
 import androidx.health.connect.client.HealthConnectClient
-import arrow.core.getOrElse
-import arrow.core.right
 import com.airbnb.mvrx.Async
 import com.airbnb.mvrx.MavericksState
 import com.airbnb.mvrx.MavericksViewModel
@@ -12,23 +8,21 @@ import com.airbnb.mvrx.MavericksViewModelFactory
 import com.airbnb.mvrx.Success
 import com.airbnb.mvrx.Uninitialized
 import com.airbnb.mvrx.ViewModelContext
-import com.airbnb.mvrx.compose.collectAsState
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalAmount
-import java.time.temporal.TemporalUnit
 
 data class HomeState(
-    val title: String = "Home",
+    val title: String = "Today",
     val isHealthSDKAvailable: Async<Boolean> = Uninitialized,
     val isHealthSDKPermissionGranted: Async<Boolean> = Uninitialized,
     val healthRecord: Async<HealthRecord> = Uninitialized,
+    val activities: Async<List<ActivityRecord>> = Uninitialized,
 ) : MavericksState
 
 class HomeViewModel(
     initialState: HomeState,
-    private val healthKitManager: HealthKitManager,
+    val healthKitManager: HealthKitManager,
 ) : MavericksViewModel<HomeState>(initialState) {
 
     val healthConnectClient: HealthConnectClient
@@ -53,6 +47,7 @@ class HomeViewModel(
 
             if (isPermissionGranted) {
                 getTodayStats()
+                getActivities()
             }
         }
     }
@@ -61,7 +56,7 @@ class HomeViewModel(
         viewModelScope.launch {
             val end = Instant.now()
             val start = end.minus(1, ChronoUnit.DAYS)
-            val result = healthKitManager.aggregateDistance(healthConnectClient, start, end)
+            val result = healthKitManager.readStats(healthConnectClient, start, end)
 
             result.getOrNull()?.let {
                 setState {
@@ -71,9 +66,23 @@ class HomeViewModel(
         }
     }
 
+    fun getActivities() {
+        viewModelScope.launch {
+            val end = Instant.now()
+            val start = end.minus(1, ChronoUnit.DAYS)
+            val result = healthKitManager.readActivities(healthConnectClient, start, end)
+
+            result?.let {
+                setState {
+                    copy(activities = Success(it))
+                }
+            }
+        }
+    }
+
     companion object : MavericksViewModelFactory<HomeViewModel, HomeState> {
 
-        override fun create(viewModelContext: ViewModelContext, state: HomeState): HomeViewModel? {
+        override fun create(viewModelContext: ViewModelContext, state: HomeState): HomeViewModel {
             val healthKitManager =
                 HealthKitManager(viewModelContext.activity, "com.google.android.apps.healthdata")
             return HomeViewModel(state, healthKitManager)

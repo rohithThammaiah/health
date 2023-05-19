@@ -6,3 +6,10 @@ data class HealthRecord(
     val caloriesBurned: Double,
     val maxHeartRate: Long,
 )
+
+fun HealthRecord?.orEmptyRecord(): HealthRecord = if (this == null) HealthRecord(
+    steps = 0,
+    distanceInMeters = 0.0,
+    caloriesBurned = 0.0,
+    maxHeartRate = 0,
+) else this
