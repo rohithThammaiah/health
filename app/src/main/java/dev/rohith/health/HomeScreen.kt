@@ -1,5 +1,6 @@
 package dev.rohith.health
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -16,6 +17,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +29,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
+import androidx.core.util.TimeUtils.formatDuration
 import com.airbnb.mvrx.compose.collectAsState
 import com.airbnb.mvrx.compose.mavericksActivityViewModel
 import java.time.Duration
@@ -44,16 +50,7 @@ fun HomeScreen(
 ) {
     val homeViewModel: HomeViewModel = mavericksActivityViewModel()
     val state: HomeState = homeViewModel.collectAsState().value
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(text = state.title, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            )
-        },
-    ) {
+    Scaffold {
         Column(
             modifier = Modifier
                 .padding(it)
@@ -74,34 +71,29 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.size(8.dp))
                         Text(
                             text = "Your stats for the day",
-                            modifier = Modifier.padding(horizontal = 16.dp)
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            style = MaterialTheme.typography.headlineSmall,
                         )
                         Spacer(modifier = Modifier.size(8.dp))
                         Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(modifier = Modifier.size(16.dp))
                     }
 
-                    item {
-                        FlowColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            maxItemsInEachColumn = 2,
-                            verticalArrangement = Arrangement.SpaceEvenly,
-                        ) {
-                            state.healthRecord.invoke()?.forEachIndexed { index, record ->
-                                StatUiModel(healthRecord = record)
-                            }
-                        }
+                    items (state.healthRecord.invoke() ?: emptyList()) {record ->
+                        StatUiModel(healthRecord = record)
+
                     }
 
                     item {
                         Spacer(modifier = Modifier.size(16.dp))
                         Text(
-                            text = "Latest Activities",
-                            modifier = Modifier.padding(horizontal = 16.dp)
+                            text = "Recent Activities",
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            style = MaterialTheme.typography.headlineSmall,
                         )
                         Spacer(modifier = Modifier.size(8.dp))
                         Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                        Spacer(modifier = Modifier.size(16.dp))
                     }
 
 
@@ -116,22 +108,24 @@ fun HomeScreen(
 
 @ExperimentalMaterial3Api
 @Composable
-fun ColumnScope.StatUiModel(healthRecord: Record) {
+fun ColumnScope.StatUiModel(healthRecord: RecordUiModel) {
     Card(
         onClick = {},
         modifier = Modifier
-            .padding(4.dp)
-            .fillMaxWidth(0.5f)
-            .weight(1f)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .fillMaxWidth(1f)
+            .weight(1f),
+        colors = CardDefaults.cardColors(containerColor = healthRecord.background)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .wrapContentHeight()
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 32.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = healthRecord.name)
-            Spacer(modifier = Modifier.size(12.dp))
-            Text(text = healthRecord.value.toString() ?: "-")
+            Text(text = healthRecord.name, color = healthRecord.onBackground, style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.weight(1f))
+            Text(text = healthRecord.value, color = healthRecord.onBackground, style = MaterialTheme.typography.headlineMedium, fontStyle = FontStyle.Italic)
         }
     }
 }
@@ -141,7 +135,8 @@ fun ActivityUiModel(activity: ActivityRecord) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        border = BorderStroke(1.dp, color = Color(0xFF000000))
     ) {
         Column(
             modifier = Modifier.padding(

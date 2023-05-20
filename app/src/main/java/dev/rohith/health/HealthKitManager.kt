@@ -90,10 +90,28 @@ class HealthKitManager(
                 response[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: 0.0
             val maximumHeartRate = response[HeartRateRecord.BPM_MAX] ?: 0L
             val healthRecords = mutableListOf<Record>()
-            healthRecords.add(Record("Steps", stepsRecord.toDouble()))
-            healthRecords.add(Record("Calories", totalCaloriesBurnedRecord))
-            healthRecords.add(Record("Distance", distanceTotalInMeters))
-            healthRecords.add(Record("Peak heart rate", maximumHeartRate.toDouble()))
+            healthRecords.add(Record("Steps", stepsRecord.toDouble(), HealthStat.STEPS))
+            healthRecords.add(
+                Record(
+                    "Calories",
+                    totalCaloriesBurnedRecord,
+                    HealthStat.CALORIES_BURNED
+                )
+            )
+            healthRecords.add(
+                Record(
+                    "Distance",
+                    distanceTotalInMeters,
+                    HealthStat.DISTANCE_COVERED
+                )
+            )
+            healthRecords.add(
+                Record(
+                    "Peak heart rate",
+                    maximumHeartRate.toDouble(),
+                    HealthStat.PEAK_HEART_BEAT
+                )
+            )
             healthRecords
         } catch (e: Exception) {
             // Run error handling here.

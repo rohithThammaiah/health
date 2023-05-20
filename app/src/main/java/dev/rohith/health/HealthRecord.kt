@@ -10,12 +10,13 @@ data class HealthRecord(
 data class Record(
     val name: String,
     val value: Double,
+    val type: HealthStat
 )
 
 fun HealthRecord?.orEmptyRecord(): HealthRecord = this
     ?: HealthRecord(
-        steps = Record("Steps", 0.0),
-        distanceInMeters = Record("Distance", 0.0),
-        caloriesBurned = Record("Calories", 0.0),
-        maxHeartRate = Record("Peak Heart Rate", 0.0),
+        steps = Record("Steps", 0.0, HealthStat.STEPS),
+        distanceInMeters = Record("Distance", 0.0, HealthStat.DISTANCE_COVERED),
+        caloriesBurned = Record("Calories", 0.0, HealthStat.CALORIES_BURNED),
+        maxHeartRate = Record("Peak Heart Rate", 0.0, HealthStat.PEAK_HEART_BEAT),
     )
