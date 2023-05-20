@@ -16,7 +16,7 @@ data class HomeState(
     val title: String = "Today",
     val isHealthSDKAvailable: Async<Boolean> = Uninitialized,
     val isHealthSDKPermissionGranted: Async<Boolean> = Uninitialized,
-    val healthRecord: Async<HealthRecord> = Uninitialized,
+    val healthRecord: Async<List<Record>> = Uninitialized,
     val activities: Async<List<ActivityRecord>> = Uninitialized,
 ) : MavericksState
 
