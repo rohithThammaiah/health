@@ -52,7 +52,7 @@ class HomeViewModel(
         }
     }
 
-    fun getTodayStats() {
+    private fun getTodayStats() {
         viewModelScope.launch {
             val end = Instant.now()
             val start = end.minus(1, ChronoUnit.DAYS)
@@ -66,17 +66,16 @@ class HomeViewModel(
         }
     }
 
-    fun getActivities() {
+    private fun getActivities() {
         viewModelScope.launch {
             val end = Instant.now()
             val start = end.minus(1, ChronoUnit.DAYS)
             val result = healthKitManager.readActivities(healthConnectClient, start, end)
 
-            result?.let {
-                setState {
-                    copy(activities = Success(it))
-                }
+            setState {
+                copy(activities = Success(result))
             }
+
         }
     }
 

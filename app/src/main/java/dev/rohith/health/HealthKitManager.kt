@@ -1,9 +1,7 @@
 package dev.rohith.health
 
 import android.content.Context
-import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
-import androidx.compose.ui.text.capitalize
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
@@ -21,6 +19,7 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import java.time.Duration
 import java.time.Instant
+import java.util.Locale
 
 class HealthKitManager(
     private val context: Context,
@@ -61,8 +60,7 @@ class HealthKitManager(
         requestPermissions: ActivityResultLauncher<Set<String>>
     ) {
         val granted = healthConnectClient.permissionController.getGrantedPermissions()
-        if (granted.containsAll(PERMISSIONS)) {
-        } else {
+        if (granted.containsAll(PERMISSIONS).not()) {
             requestPermissions.launch(PERMISSIONS)
         }
     }
@@ -86,19 +84,14 @@ class HealthKitManager(
                     timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
                 )
             )
-            // The result may be null if no data is available in the time range.
             val distanceTotalInMeters = response[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0.0
             val stepsRecord = response[StepsRecord.COUNT_TOTAL] ?: 0L
-            val activeCaloriesBurnedRecord =
-                response[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories ?: 0.0
             val totalCaloriesBurnedRecord =
                 response[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: 0.0
-            // The result may be null if no data is available in the time range.
-            val minimumHeartRate = response[HeartRateRecord.BPM_MIN]
             val maximumHeartRate = response[HeartRateRecord.BPM_MAX] ?: 0L
             val healthRecords = mutableListOf<Record>()
             healthRecords.add(Record("Steps", stepsRecord.toDouble()))
-            healthRecords.add(Record("Calories", distanceTotalInMeters))
+            healthRecords.add(Record("Calories", totalCaloriesBurnedRecord))
             healthRecords.add(Record("Distance", distanceTotalInMeters))
             healthRecords.add(Record("Peak heart rate", maximumHeartRate.toDouble()))
             healthRecords
@@ -130,24 +123,18 @@ class HealthKitManager(
                 readStats(healthConnectClient, exerciseRecord.startTime, exerciseRecord.endTime)
             val activityRecord = ActivityRecord(
                 id = exerciseRecord.exerciseType,
-                type = EXERCISE_TYPE_INT_TO_STRING_MAP[exerciseRecord.exerciseType]?.capitalize() ?: "Exercise",
+                type = EXERCISE_TYPE_INT_TO_STRING_MAP[exerciseRecord.exerciseType]?.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(
+                        Locale.getDefault()
+                    ) else it.toString()
+                }
+                    ?: "Exercise",
                 healthRecord = healthRecord.getOrNull() ?: emptyList(),
                 duration = Duration.between(exerciseRecord.startTime, exerciseRecord.endTime),
                 timeStamp = exerciseRecord.startTime,
             )
             activities.add(activityRecord)
-            Log.e("HealthKitManager", healthRecord.toString())
-            Log.e("HealthKitManager", activityRecord.toString())
         }
         return activities
     }
 }
-
-
-data class ActivityRecord(
-    val id: Int,
-    val type: String,
-    val healthRecord: List<Record>,
-    val duration: Duration,
-    val timeStamp: Instant
-)
