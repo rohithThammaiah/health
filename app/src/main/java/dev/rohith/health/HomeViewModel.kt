@@ -11,7 +11,11 @@ import com.airbnb.mvrx.Uninitialized
 import com.airbnb.mvrx.ViewModelContext
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalField
 import kotlin.math.roundToInt
 
 data class RecordUiModel(
@@ -63,9 +67,15 @@ class HomeViewModel(
 
     private fun getTodayStats() {
         viewModelScope.launch {
-            val end = Instant.now()
-            val start = end.minus(1, ChronoUnit.DAYS)
-            val result = healthKitManager.readStats(healthConnectClient, start, end)
+            val end = LocalDateTime.now()
+                .with(ChronoField.HOUR_OF_DAY, 23)
+                .with(ChronoField.MINUTE_OF_HOUR, 59)
+                .with(ChronoField.SECOND_OF_MINUTE, 29)
+            val start = end
+                .with(ChronoField.HOUR_OF_DAY, 0)
+                .with(ChronoField.MINUTE_OF_HOUR, 0)
+                .with(ChronoField.SECOND_OF_MINUTE, 0)
+            val result = healthKitManager.readStats(healthConnectClient, start.toInstant(ZoneOffset.UTC), end.toInstant(ZoneOffset.UTC))
 
             result.getOrNull()?.let {
                 setState {
@@ -114,9 +124,15 @@ class HomeViewModel(
 
     private fun getActivities() {
         viewModelScope.launch {
-            val end = Instant.now()
-            val start = end.minus(1, ChronoUnit.DAYS)
-            val result = healthKitManager.readActivities(healthConnectClient, start, end)
+            val end = LocalDateTime.now()
+                .with(ChronoField.HOUR_OF_DAY, 23)
+                .with(ChronoField.MINUTE_OF_HOUR, 59)
+                .with(ChronoField.SECOND_OF_MINUTE, 29)
+            val start = end
+                .with(ChronoField.HOUR_OF_DAY, 0)
+                .with(ChronoField.MINUTE_OF_HOUR, 0)
+                .with(ChronoField.SECOND_OF_MINUTE, 0)
+            val result = healthKitManager.readActivities(healthConnectClient, start.toInstant(ZoneOffset.UTC), end.toInstant(ZoneOffset.UTC))
 
             setState {
                 copy(activities = Success(result))
