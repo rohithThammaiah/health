@@ -114,6 +114,7 @@ fun HomeScreen(
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
+                            Spacer(modifier = Modifier.size(4.dp))
                             Text(text = "Fitness", style = Typography.labelLarge)
                         }
                     }
@@ -134,6 +135,7 @@ fun HomeScreen(
                                 contentDescription = null,
                                 modifier = Modifier.size(32.dp)
                             )
+                            Spacer(modifier = Modifier.size(4.dp))
                             Text(text = "Nutrition", style = Typography.labelLarge)
                         }
                     }
@@ -154,6 +156,7 @@ fun HomeScreen(
                                 contentDescription = null,
                                 modifier = Modifier.size(32.dp)
                             )
+                            Spacer(modifier = Modifier.size(4.dp))
                             Text(text = "Hydro", style = Typography.labelLarge)
                         }
                     }
