@@ -27,7 +27,7 @@ class HealthKitManager(
 ) {
 
     fun getClient(): Either<HealthSDKError, HealthConnectClient> = either {
-        val availabilityStatus = HealthConnectClient.sdkStatus(context, providerPackageName)
+        val availabilityStatus = HealthConnectClient.getSdkStatus(context, providerPackageName)
         ensure(availabilityStatus != HealthConnectClient.SDK_UNAVAILABLE) {
             SDKNotAvailableException()
         }

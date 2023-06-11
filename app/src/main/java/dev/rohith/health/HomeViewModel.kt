@@ -1,5 +1,6 @@
 package dev.rohith.health
 
+import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
 import androidx.health.connect.client.HealthConnectClient
 import com.airbnb.mvrx.Async
@@ -9,6 +10,7 @@ import com.airbnb.mvrx.MavericksViewModelFactory
 import com.airbnb.mvrx.Success
 import com.airbnb.mvrx.Uninitialized
 import com.airbnb.mvrx.ViewModelContext
+import dev.rohith.health.ui.theme.DarkColorScheme
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
@@ -23,6 +25,7 @@ data class RecordUiModel(
     val value: String,
     val background: Color,
     val onBackground: Color,
+    @DrawableRes val icon: Int,
 )
 
 data class HomeState(
@@ -85,32 +88,36 @@ class HomeViewModel(
                                 RecordUiModel(
                                     name = it.name,
                                     value = "${it.value.roundToInt()}",
-                                    background = Color(0xFFfff2e6),
-                                    onBackground = Color(0xFF000000),
+                                    background = DarkColorScheme.surface,
+                                    onBackground = DarkColorScheme.onSurface,
+                                    icon = R.drawable.ic_walk_24,
                                 )
                             }
                             HealthStat.CALORIES_BURNED -> {
                                 RecordUiModel(
                                     name = it.name,
                                     value = "${String.format("%.3f", (it.value / 1000.0))} Kcal",
-                                    background = Color(0xFFe8fee7),
-                                    onBackground = Color(0xFF000000),
+                                    background = DarkColorScheme.surface,
+                                    onBackground = DarkColorScheme.onSurface,
+                                    icon = R.drawable.ic_fire_department_24,
                                 )
                             }
                             HealthStat.DISTANCE_COVERED -> {
                                 RecordUiModel(
                                     name = it.name,
                                     value = "${String.format("%.3f", (it.value / 1000.0))} Kms",
-                                    background = Color(0xFF98e1ee),
-                                    onBackground = Color(0xFFFFFFFF),
+                                    background = DarkColorScheme.surface,
+                                    onBackground = DarkColorScheme.onSurface,
+                                    icon = R.drawable.ic_map_24,
                                 )
                             }
                             HealthStat.PEAK_HEART_BEAT -> {
                                 RecordUiModel(
                                     name = it.name,
                                     value = "${it.value.roundToInt()} bpm",
-                                    background = Color(0xFFff4648),
-                                    onBackground = Color(0xFFFFFFFF),
+                                    background = DarkColorScheme.surface,
+                                    onBackground = DarkColorScheme.onSurface,
+                                    icon = R.drawable.ic_chart_24,
                                 )
                             }
                         }

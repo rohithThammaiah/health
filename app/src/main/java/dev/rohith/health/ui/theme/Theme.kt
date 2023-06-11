@@ -18,48 +18,26 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF0b7d72),
-    secondary = Color(0xFF085750),
-    tertiary = Color(0xFFc5fff9),
-    background = Color(0xFF242d40),
-    surface = Color(0xFF2f3b52),
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF0b7d72),
-    secondary = Color(0xFF085750),
-    tertiary = Color(0xFFc5fff9),
-    background = Color(0xFFfffef9),
-    surface = Color(0xFFffffff),
-    primaryContainer = Color(0xFFffffff),
-    surfaceVariant = Color(0xFFffffff),
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+val DarkColorScheme = darkColorScheme(
+    primary = Color(0xFF9A6AFF),
+    background = Color(0xFF1e2029),
+    onBackground = Color(0xFFe3e3e3),
+    surface = Color(0xFF0f0f0f),
+    onSurface = Color(0xFFfdfdfd)
 )
 
 @Composable
 fun HealthTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = LightColorScheme
+    val colorScheme = DarkColorScheme
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
+            window.statusBarColor = colorScheme.surface.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
     }
 

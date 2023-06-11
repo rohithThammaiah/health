@@ -1,56 +1,167 @@
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+
 package dev.rohith.health
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowColumn
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.typography
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.core.util.TimeUtils.formatDuration
 import com.airbnb.mvrx.compose.collectAsState
 import com.airbnb.mvrx.compose.mavericksActivityViewModel
+import dev.rohith.health.ui.theme.Typography
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
-
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     allowPermission: () -> Unit,
 ) {
     val homeViewModel: HomeViewModel = mavericksActivityViewModel()
     val state: HomeState = homeViewModel.collectAsState().value
-    Scaffold {
+    Scaffold(
+        topBar = {
+            Card(
+                shape = RoundedCornerShape(0.dp),
+                modifier = Modifier,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(
+                        onClick = { /*TODO*/ },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        )
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_calendar_month_24),
+                            contentDescription = null
+                        )
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text(
+                            text = "Today",
+                            style = Typography.displayLarge,
+                            modifier = Modifier.align(Alignment.Bottom)
+                        )
+                    }
+                }
+            }
+        },
+        bottomBar = {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(0.dp),
+                shape = RoundedCornerShape(0.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(0.dp),
+                        shape = RoundedCornerShape(0.dp),
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
+                            ) {
+                                Icon(
+                                    painter = painterResource(
+                                        id = R.drawable.ic_show_chart_24
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                            Text(text = "Fitness", style = Typography.labelLarge)
+                        }
+                    }
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(0.dp),
+                        shape = RoundedCornerShape(0.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    id = R.drawable.ic_food_bank_24
+                                ),
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Text(text = "Nutrition", style = Typography.labelLarge)
+                        }
+                    }
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(0.dp),
+                        shape = RoundedCornerShape(0.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    id = R.drawable.ic_water_drop_24
+                                ),
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Text(text = "Hydro", style = Typography.labelLarge)
+                        }
+                    }
+
+                }
+            }
+        }
+    ) {
         Column(
             modifier = Modifier
                 .padding(it)
@@ -64,23 +175,22 @@ fun HomeScreen(
                     Text(text = "Give Health Connect permission")
                 }
             } else {
-                val healthRecord = state.healthRecord.invoke()
                 LazyColumn {
 
                     item {
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = "Your stats for the day",
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            style = MaterialTheme.typography.headlineSmall,
-                        )
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Divider(modifier = Modifier.padding(horizontal = 16.dp))
                         Spacer(modifier = Modifier.size(16.dp))
                     }
 
-                    items (state.healthRecord.invoke() ?: emptyList()) {record ->
-                        StatUiModel(healthRecord = record)
+                    item {
+                        FlowRow(
+                            maxItemsInEachRow = 2,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                        ) {
+                            state.healthRecord.invoke()?.forEach { record ->
+                                StatUiModel(healthRecord = record)
+                            }
+                        }
 
                     }
 
@@ -89,7 +199,7 @@ fun HomeScreen(
                         Text(
                             text = "Recent Activities",
                             modifier = Modifier.padding(horizontal = 16.dp),
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = typography.headlineLarge,
                         )
                         Spacer(modifier = Modifier.size(8.dp))
                         Divider(modifier = Modifier.padding(horizontal = 16.dp))
@@ -108,24 +218,43 @@ fun HomeScreen(
 
 @ExperimentalMaterial3Api
 @Composable
-fun ColumnScope.StatUiModel(healthRecord: RecordUiModel) {
+fun RowScope.StatUiModel(healthRecord: RecordUiModel) {
     Card(
         onClick = {},
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .fillMaxWidth(1f)
-            .weight(1f),
+            .weight(1f)
+            .fillMaxWidth(0.5f)
+            .padding(bottom = 16.dp),
         colors = CardDefaults.cardColors(containerColor = healthRecord.background)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .wrapContentHeight()
-                .padding(horizontal = 16.dp, vertical = 32.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(horizontal = 16.dp, vertical = 16.dp),
         ) {
-            Text(text = healthRecord.name, color = healthRecord.onBackground, style = MaterialTheme.typography.titleMedium)
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = healthRecord.name,
+                    color = healthRecord.onBackground,
+                    style = typography.titleMedium
+                )
+
+                Icon(
+                    painter = painterResource(id = healthRecord.icon),
+                    contentDescription = healthRecord.name,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
             Spacer(modifier = Modifier.weight(1f))
-            Text(text = healthRecord.value, color = healthRecord.onBackground, style = MaterialTheme.typography.headlineMedium, fontStyle = FontStyle.Italic)
+            Text(
+                text = healthRecord.value,
+                color = healthRecord.onBackground,
+                style = typography.bodyLarge,
+            )
         }
     }
 }
@@ -150,7 +279,7 @@ fun ActivityUiModel(activity: ActivityRecord) {
                 Text(text = formatDuration(activity.duration))
             }
             Spacer(modifier = Modifier.size(8.dp))
-            activity.healthRecord.forEachIndexed { index, record ->
+            activity.healthRecord.forEachIndexed { _, record ->
                 Row {
                     Text(text = record.name)
                     Spacer(modifier = Modifier.size(4.dp))
@@ -177,9 +306,9 @@ fun formatDuration(duration: Duration): String {
 }
 
 fun formatInstant(instant: Instant): String {
-    val PATTERN_FORMAT = "dd MMM, yyyy";
+    val format = "dd MMM, yyyy"
 
-    val formatter = DateTimeFormatter.ofPattern(PATTERN_FORMAT)
+    val formatter = DateTimeFormatter.ofPattern(format)
         .withZone(ZoneId.systemDefault())
 
     return formatter.format(instant)
