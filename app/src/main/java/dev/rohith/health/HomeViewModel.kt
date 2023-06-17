@@ -13,8 +13,11 @@ import com.airbnb.mvrx.ViewModelContext
 import dev.rohith.health.ui.theme.DarkColorScheme
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalField
@@ -29,12 +32,18 @@ data class RecordUiModel(
 )
 
 data class HomeState(
-    val title: String = "Today",
+    val selectedDate: LocalDate = LocalDate.now(),
     val isHealthSDKAvailable: Async<Boolean> = Uninitialized,
     val isHealthSDKPermissionGranted: Async<Boolean> = Uninitialized,
     val healthRecord: Async<List<RecordUiModel>> = Uninitialized,
     val activities: Async<List<ActivityRecord>> = Uninitialized,
-) : MavericksState
+) : MavericksState {
+    val title: String
+        get() {
+            val pattern = DateTimeFormatter.ofPattern("dd MM yyyy")
+            return selectedDate.format(pattern)
+        }
+}
 
 class HomeViewModel(
     initialState: HomeState,
@@ -69,83 +78,115 @@ class HomeViewModel(
     }
 
     private fun getTodayStats() {
-        viewModelScope.launch {
-            val end = LocalDateTime.now()
-                .with(ChronoField.HOUR_OF_DAY, 23)
-                .with(ChronoField.MINUTE_OF_HOUR, 59)
-                .with(ChronoField.SECOND_OF_MINUTE, 29)
-            val start = end
-                .with(ChronoField.HOUR_OF_DAY, 0)
-                .with(ChronoField.MINUTE_OF_HOUR, 0)
-                .with(ChronoField.SECOND_OF_MINUTE, 0)
-            val result = healthKitManager.readStats(healthConnectClient, start.toInstant(ZoneOffset.UTC), end.toInstant(ZoneOffset.UTC))
+        withState { state ->
+            viewModelScope.launch {
+                val end = state.selectedDate.atStartOfDay()
+                    .with(ChronoField.HOUR_OF_DAY, 23)
+                    .with(ChronoField.MINUTE_OF_HOUR, 59)
+                    .with(ChronoField.SECOND_OF_MINUTE, 29)
+                val start = end
+                    .with(ChronoField.HOUR_OF_DAY, 0)
+                    .with(ChronoField.MINUTE_OF_HOUR, 0)
+                    .with(ChronoField.SECOND_OF_MINUTE, 0)
+                val result = healthKitManager.readStats(
+                    healthConnectClient, start.toInstant(
+                        ZoneOffset.UTC
+                    ), end.toInstant(ZoneOffset.UTC)
+                )
 
-            result.getOrNull()?.let {
-                setState {
-                    val uiModels = it.map {
-                        when (it.type) {
-                            HealthStat.STEPS -> {
-                                RecordUiModel(
-                                    name = it.name,
-                                    value = "${it.value.roundToInt()}",
-                                    background = DarkColorScheme.surface,
-                                    onBackground = DarkColorScheme.onSurface,
-                                    icon = R.drawable.ic_walk_24,
-                                )
+                result.getOrNull()?.let {
+                    setState {
+                        val uiModels = it.map {
+                            when (it.type) {
+                                HealthStat.STEPS -> {
+                                    RecordUiModel(
+                                        name = it.name,
+                                        value = "${it.value.roundToInt()}",
+                                        background = DarkColorScheme.surface,
+                                        onBackground = DarkColorScheme.onSurface,
+                                        icon = R.drawable.ic_walk_24,
+                                    )
+                                }
+
+                                HealthStat.CALORIES_BURNED -> {
+                                    RecordUiModel(
+                                        name = it.name,
+                                        value = "${
+                                            String.format(
+                                                "%.3f",
+                                                (it.value / 1000.0)
+                                            )
+                                        } Kcal",
+                                        background = DarkColorScheme.surface,
+                                        onBackground = DarkColorScheme.onSurface,
+                                        icon = R.drawable.ic_fire_department_24,
+                                    )
+                                }
+
+                                HealthStat.DISTANCE_COVERED -> {
+                                    RecordUiModel(
+                                        name = it.name,
+                                        value = "${String.format("%.3f", (it.value / 1000.0))} Kms",
+                                        background = DarkColorScheme.surface,
+                                        onBackground = DarkColorScheme.onSurface,
+                                        icon = R.drawable.ic_map_24,
+                                    )
+                                }
+
+                                HealthStat.PEAK_HEART_BEAT -> {
+                                    RecordUiModel(
+                                        name = it.name,
+                                        value = "${it.value.roundToInt()} bpm",
+                                        background = DarkColorScheme.surface,
+                                        onBackground = DarkColorScheme.onSurface,
+                                        icon = R.drawable.ic_chart_24,
+                                    )
+                                }
                             }
-                            HealthStat.CALORIES_BURNED -> {
-                                RecordUiModel(
-                                    name = it.name,
-                                    value = "${String.format("%.3f", (it.value / 1000.0))} Kcal",
-                                    background = DarkColorScheme.surface,
-                                    onBackground = DarkColorScheme.onSurface,
-                                    icon = R.drawable.ic_fire_department_24,
-                                )
-                            }
-                            HealthStat.DISTANCE_COVERED -> {
-                                RecordUiModel(
-                                    name = it.name,
-                                    value = "${String.format("%.3f", (it.value / 1000.0))} Kms",
-                                    background = DarkColorScheme.surface,
-                                    onBackground = DarkColorScheme.onSurface,
-                                    icon = R.drawable.ic_map_24,
-                                )
-                            }
-                            HealthStat.PEAK_HEART_BEAT -> {
-                                RecordUiModel(
-                                    name = it.name,
-                                    value = "${it.value.roundToInt()} bpm",
-                                    background = DarkColorScheme.surface,
-                                    onBackground = DarkColorScheme.onSurface,
-                                    icon = R.drawable.ic_chart_24,
-                                )
-                            }
+
                         }
-
+                        copy(healthRecord = Success(uiModels))
                     }
-                    copy(healthRecord = Success(uiModels))
                 }
             }
         }
     }
 
     private fun getActivities() {
-        viewModelScope.launch {
-            val end = LocalDateTime.now()
-                .with(ChronoField.HOUR_OF_DAY, 23)
-                .with(ChronoField.MINUTE_OF_HOUR, 59)
-                .with(ChronoField.SECOND_OF_MINUTE, 29)
-            val start = end
-                .with(ChronoField.HOUR_OF_DAY, 0)
-                .with(ChronoField.MINUTE_OF_HOUR, 0)
-                .with(ChronoField.SECOND_OF_MINUTE, 0)
-            val result = healthKitManager.readActivities(healthConnectClient, start.toInstant(ZoneOffset.UTC), end.toInstant(ZoneOffset.UTC))
+        withState { state ->
+            viewModelScope.launch {
+                val end = state.selectedDate.atStartOfDay()
+                    .with(ChronoField.HOUR_OF_DAY, 23)
+                    .with(ChronoField.MINUTE_OF_HOUR, 59)
+                    .with(ChronoField.SECOND_OF_MINUTE, 29)
+                val start = end
+                    .with(ChronoField.HOUR_OF_DAY, 0)
+                    .with(ChronoField.MINUTE_OF_HOUR, 0)
+                    .with(ChronoField.SECOND_OF_MINUTE, 0)
+                val result = healthKitManager.readActivities(
+                    healthConnectClient,
+                    start.toInstant(ZoneOffset.UTC),
+                    end.toInstant(ZoneOffset.UTC)
+                )
 
-            setState {
-                copy(activities = Success(result))
+                setState {
+                    copy(activities = Success(result))
+                }
+
             }
-
         }
+    }
+
+    fun setSelectedDate(selectedDateMillis: Long?) {
+        if (selectedDateMillis == null) return
+        val dateFromMillis = LocalDateTime.from(
+            Instant.ofEpochMilli(selectedDateMillis).atZone(ZoneId.systemDefault())
+        ).toLocalDate()
+        setState {
+            copy(selectedDate = dateFromMillis)
+        }
+        getActivities()
+        getTodayStats()
     }
 
     companion object : MavericksViewModelFactory<HomeViewModel, HomeState> {
