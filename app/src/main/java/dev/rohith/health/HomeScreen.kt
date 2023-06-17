@@ -1,4 +1,5 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class,
+@file:OptIn(
+    ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class,
     ExperimentalMaterial3Api::class
 )
 
@@ -7,6 +8,7 @@ package dev.rohith.health
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -47,6 +50,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.airbnb.mvrx.compose.collectAsState
 import com.airbnb.mvrx.compose.mavericksActivityViewModel
+import dev.rohith.health.ui.theme.DarkColorScheme
 import dev.rohith.health.ui.theme.Typography
 import java.time.Duration
 import java.time.Instant
@@ -99,8 +103,11 @@ fun HomeScreen(
 
                 AnimatedVisibility(visible = isPickerVisible) {
                     val datePickerState =
-                        rememberDatePickerState(initialSelectedDateMillis = state.selectedDate.atStartOfDay().toInstant(
-                            ZoneOffset.UTC).toEpochMilli())
+                        rememberDatePickerState(
+                            initialSelectedDateMillis = state.selectedDate.atStartOfDay().toInstant(
+                                ZoneOffset.UTC
+                            ).toEpochMilli()
+                        )
                     homeViewModel.setSelectedDate(datePickerState.selectedDateMillis)
                     DatePicker(
                         state = datePickerState,
@@ -294,30 +301,60 @@ fun ActivityUiModel(activity: ActivityRecord) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        border = BorderStroke(1.dp, color = Color(0xFF000000))
+        border = BorderStroke(1.dp, color = Color(0xFF000000)),
+        colors = CardDefaults.cardColors(containerColor = DarkColorScheme.surface)
     ) {
-        Column(
+        Row(
             modifier = Modifier.padding(
                 horizontal = 16.dp,
                 vertical = 12.dp
             )
         ) {
-            Row {
-                Text(text = activity.type)
-                Spacer(modifier = Modifier.weight(1f))
-                Text(text = formatDuration(activity.duration))
-            }
-            Spacer(modifier = Modifier.size(8.dp))
-            activity.healthRecord.forEachIndexed { _, record ->
-                Row {
-                    Text(text = record.name)
-                    Spacer(modifier = Modifier.size(4.dp))
-                    Text(text = record.value.toString())
+            Card(
+                shape = CircleShape,
+                colors = CardDefaults.cardColors(containerColor = DarkColorScheme.primary)
+            ) {
+                Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_walk_24),
+                        contentDescription = null,
+                        tint = DarkColorScheme.onPrimary,
+                        modifier = Modifier.align(
+                            Alignment.Center
+                        )
+                    )
                 }
             }
-
-            Spacer(modifier = Modifier.size(16.dp))
-            Text(text = formatInstant(activity.timeStamp))
+            Spacer(modifier = Modifier.size(12.dp))
+            Column() {
+                Row {
+                    Text(text = activity.type, color = DarkColorScheme.onSurface, style = Typography.titleLarge,)
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = formatDuration(activity.duration),
+                        color = DarkColorScheme.onSurface,
+                        style = Typography.bodySmall
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    activity.healthRecord.filterNot { it.type == HealthStat.PEAK_HEART_BEAT }
+                        .forEachIndexed { _, record ->
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                Text(
+                                    text = record.prettyValue,
+                                    color = DarkColorScheme.onSurface,
+                                    style = Typography.bodyMedium
+                                )
+                                Spacer(modifier = Modifier.size(3.dp))
+                                Text(
+                                    text = record.unit,
+                                    color = DarkColorScheme.onSurface.copy(alpha = 0.8f),
+                                    style = Typography.bodyMedium
+                                )
+                            }
+                        }
+                }
+            }
         }
     }
 }

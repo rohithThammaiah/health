@@ -169,8 +169,22 @@ class HomeViewModel(
                     end.toInstant(ZoneOffset.UTC)
                 )
 
+                val mapped = result.map { activityRecord ->
+                    val final = activityRecord.healthRecord.map {
+                        val finalRecord = when(it.type) {
+                            HealthStat.PEAK_HEART_BEAT -> it.copy(prettyValue = "${it.value.toInt()}", unit = "bpm")
+                            HealthStat.DISTANCE_COVERED -> it.copy(prettyValue = String.format("%.2f", (it.value/1000.0)), unit = "km")
+                            HealthStat.STEPS -> it.copy(prettyValue = "${it.value.roundToInt()}")
+                            HealthStat.CALORIES_BURNED -> it.copy(prettyValue = "${it.value.roundToInt()}", unit = "kcal")
+                        }
+
+                        finalRecord
+                    }
+                    activityRecord.copy(healthRecord = final)
+                }
+
                 setState {
-                    copy(activities = Success(result))
+                    copy(activities = Success(mapped))
                 }
 
             }
