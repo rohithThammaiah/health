@@ -246,6 +246,21 @@ fun HomeScreen(
                     items(state.activities.invoke() ?: emptyList()) { activity ->
                         ActivityUiModel(activity = activity)
                     }
+
+                    item {
+                        Spacer(modifier = Modifier.padding(8.dp))
+                    }
+
+                    item {
+                        HeatMap(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            heatMapData = state.heatMapData.invoke() ?: emptyList(),
+                        )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.padding(8.dp))
+                    }
                 }
             }
         }
@@ -328,7 +343,11 @@ fun ActivityUiModel(activity: ActivityRecord) {
             Spacer(modifier = Modifier.size(12.dp))
             Column() {
                 Row {
-                    Text(text = activity.type, color = DarkColorScheme.onSurface, style = Typography.titleLarge,)
+                    Text(
+                        text = activity.type,
+                        color = DarkColorScheme.onSurface,
+                        style = Typography.titleLarge,
+                    )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
                         text = formatDuration(activity.duration),

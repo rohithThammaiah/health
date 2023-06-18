@@ -1,5 +1,6 @@
 package dev.rohith.health
 
+import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
 import androidx.health.connect.client.HealthConnectClient
@@ -20,7 +21,6 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalField
 import kotlin.math.roundToInt
 
 data class RecordUiModel(
@@ -37,6 +37,7 @@ data class HomeState(
     val isHealthSDKPermissionGranted: Async<Boolean> = Uninitialized,
     val healthRecord: Async<List<RecordUiModel>> = Uninitialized,
     val activities: Async<List<ActivityRecord>> = Uninitialized,
+    val heatMapData: Async<List<HeatMapData>> = Uninitialized,
 ) : MavericksState {
     val title: String
         get() {
@@ -73,6 +74,7 @@ class HomeViewModel(
             if (isPermissionGranted) {
                 getTodayStats()
                 getActivities()
+                getDataForHeatMap()
             }
         }
     }
@@ -171,11 +173,24 @@ class HomeViewModel(
 
                 val mapped = result.map { activityRecord ->
                     val final = activityRecord.healthRecord.map {
-                        val finalRecord = when(it.type) {
-                            HealthStat.PEAK_HEART_BEAT -> it.copy(prettyValue = "${it.value.toInt()}", unit = "bpm")
-                            HealthStat.DISTANCE_COVERED -> it.copy(prettyValue = String.format("%.2f", (it.value/1000.0)), unit = "km")
+                        val finalRecord = when (it.type) {
+                            HealthStat.PEAK_HEART_BEAT -> it.copy(
+                                prettyValue = "${it.value.toInt()}",
+                                unit = "bpm"
+                            )
+
+                            HealthStat.DISTANCE_COVERED -> it.copy(
+                                prettyValue = String.format(
+                                    "%.2f",
+                                    (it.value / 1000.0)
+                                ), unit = "km"
+                            )
+
                             HealthStat.STEPS -> it.copy(prettyValue = "${it.value.roundToInt()}")
-                            HealthStat.CALORIES_BURNED -> it.copy(prettyValue = "${it.value.roundToInt()}", unit = "kcal")
+                            HealthStat.CALORIES_BURNED -> it.copy(
+                                prettyValue = "${it.value.roundToInt()}",
+                                unit = "kcal"
+                            )
                         }
 
                         finalRecord
@@ -201,6 +216,70 @@ class HomeViewModel(
         }
         getActivities()
         getTodayStats()
+        getDataForHeatMap()
+    }
+
+    private fun getDataForHeatMap() {
+        val today = LocalDateTime.now()
+        val pastEightWeek = today.minusWeeks(8).plusDays(1)
+        viewModelScope.launch {
+            val result = healthKitManager.readActivities(
+                healthConnectClient,
+                pastEightWeek.toInstant(ZoneOffset.UTC),
+                today.toInstant(ZoneOffset.UTC)
+            )
+
+            val mapped = result.map { activityRecord ->
+                val final = activityRecord.healthRecord.map {
+                    val finalRecord = when (it.type) {
+                        HealthStat.PEAK_HEART_BEAT -> it.copy(
+                            prettyValue = "${it.value.toInt()}",
+                            unit = "bpm"
+                        )
+
+                        HealthStat.DISTANCE_COVERED -> it.copy(
+                            prettyValue = String.format(
+                                "%.2f",
+                                (it.value / 1000.0)
+                            ), unit = "km"
+                        )
+
+                        HealthStat.STEPS -> it.copy(prettyValue = "${it.value.roundToInt()}")
+                        HealthStat.CALORIES_BURNED -> it.copy(
+                            prettyValue = "${it.value.roundToInt()}",
+                            unit = "kcal"
+                        )
+                    }
+
+                    finalRecord
+                }
+                activityRecord.copy(healthRecord = final)
+            }
+
+            val activitiesByDate = mapped.groupBy {
+                it.timeStamp.truncatedTo(ChronoUnit.DAYS)
+            }
+
+            val dates = mutableListOf<HeatMapData>()
+
+            for (date in pastEightWeek.toLocalDate()..today.toLocalDate()) {
+                Log.e("Date", date.toString())
+                dates.add(
+                    HeatMapData(
+                        date = date,
+                        count = activitiesByDate.get(
+                            date.atStartOfDay().toInstant(ZoneOffset.UTC)
+                        )?.size ?: 0
+                    )
+                )
+            }
+
+            setState {
+                copy(
+                    heatMapData = Success(dates)
+                )
+            }
+        }
     }
 
     companion object : MavericksViewModelFactory<HomeViewModel, HomeState> {
@@ -213,6 +292,11 @@ class HomeViewModel(
     }
 
 }
+
+data class HeatMapData(
+    val date: LocalDate,
+    val count: Int,
+)
 
 enum class HealthStat {
     STEPS,
