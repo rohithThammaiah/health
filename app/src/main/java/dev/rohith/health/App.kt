@@ -7,7 +7,6 @@ class App: Application() {
 
     override fun onCreate() {
         super.onCreate()
-
         Mavericks.initialize(this)
     }
 }

@@ -1,8 +1,6 @@
-package dev.rohith.health
+package dev.rohith.health.home
 
 import android.util.Log
-import androidx.annotation.DrawableRes
-import androidx.compose.ui.graphics.Color
 import androidx.health.connect.client.HealthConnectClient
 import com.airbnb.mvrx.Async
 import com.airbnb.mvrx.MavericksState
@@ -11,6 +9,12 @@ import com.airbnb.mvrx.MavericksViewModelFactory
 import com.airbnb.mvrx.Success
 import com.airbnb.mvrx.Uninitialized
 import com.airbnb.mvrx.ViewModelContext
+import dev.rohith.health.R
+import dev.rohith.health.data.ActivityRecord
+import dev.rohith.health.data.HealthKitManager
+import dev.rohith.health.data.HealthStat
+import dev.rohith.health.data.HeatMapData
+import dev.rohith.health.data.rangeTo
 import dev.rohith.health.ui.theme.DarkColorScheme
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -22,14 +26,6 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
-
-data class RecordUiModel(
-    val name: String,
-    val value: String,
-    val background: Color,
-    val onBackground: Color,
-    @DrawableRes val icon: Int,
-)
 
 data class HomeState(
     val selectedDate: LocalDate = LocalDate.now(),
@@ -51,19 +47,32 @@ class HomeViewModel(
     val healthKitManager: HealthKitManager,
 ) : MavericksViewModel<HomeState>(initialState) {
 
-    val healthConnectClient: HealthConnectClient
-        get() = _healthConnectClient!!
+    val healthConnectClient: HealthConnectClient?
+        get() = _healthConnectClient
 
     private var _healthConnectClient: HealthConnectClient? = null
 
     init {
         _healthConnectClient = healthKitManager.getClient().getOrNull()
-        checkPermission()
+        if (_healthConnectClient == null) {
+            handleHealthConnectUnavailable()
+        } else {
+            checkPermission()
+        }
+    }
+
+    private fun handleHealthConnectUnavailable() {
+        setState {
+            copy(
+                isHealthSDKAvailable = Success(false),
+                isHealthSDKPermissionGranted = Success(false)
+            )
+        }
     }
 
     private fun checkPermission() {
         viewModelScope.launch {
-            val isPermissionGranted = healthKitManager.isPermissionsGranted(healthConnectClient)
+            val isPermissionGranted = healthKitManager.isPermissionsGranted(healthConnectClient!!)
             setState {
                 copy(
                     isHealthSDKAvailable = Success(_healthConnectClient != null),
@@ -91,7 +100,7 @@ class HomeViewModel(
                     .with(ChronoField.MINUTE_OF_HOUR, 0)
                     .with(ChronoField.SECOND_OF_MINUTE, 0)
                 val result = healthKitManager.readStats(
-                    healthConnectClient, start.toInstant(
+                    healthConnectClient!!, start.toInstant(
                         ZoneOffset.UTC
                     ), end.toInstant(ZoneOffset.UTC)
                 )
@@ -166,7 +175,7 @@ class HomeViewModel(
                     .with(ChronoField.MINUTE_OF_HOUR, 0)
                     .with(ChronoField.SECOND_OF_MINUTE, 0)
                 val result = healthKitManager.readActivities(
-                    healthConnectClient,
+                    healthConnectClient!!,
                     start.toInstant(ZoneOffset.UTC),
                     end.toInstant(ZoneOffset.UTC)
                 )
@@ -208,15 +217,21 @@ class HomeViewModel(
 
     fun setSelectedDate(selectedDateMillis: Long?) {
         if (selectedDateMillis == null) return
-        val dateFromMillis = LocalDateTime.from(
-            Instant.ofEpochMilli(selectedDateMillis).atZone(ZoneId.systemDefault())
-        ).toLocalDate()
-        setState {
-            copy(selectedDate = dateFromMillis)
+        withState {
+            val previouslySelectedTime = it.selectedDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
+            if (selectedDateMillis == previouslySelectedTime)
+             return@withState
+            val dateFromMillis = LocalDateTime.from(
+                Instant.ofEpochMilli(selectedDateMillis).atZone(ZoneId.systemDefault())
+            ).toLocalDate()
+            setState {
+                copy(selectedDate = dateFromMillis)
+            }
+            getActivities()
+            getTodayStats()
+            getDataForHeatMap()
         }
-        getActivities()
-        getTodayStats()
-        getDataForHeatMap()
+
     }
 
     private fun getDataForHeatMap() {
@@ -224,7 +239,7 @@ class HomeViewModel(
         val pastEightWeek = today.minusWeeks(8).plusDays(1)
         viewModelScope.launch {
             val result = healthKitManager.readActivities(
-                healthConnectClient,
+                healthConnectClient!!,
                 pastEightWeek.toInstant(ZoneOffset.UTC),
                 today.toInstant(ZoneOffset.UTC)
             )
@@ -291,16 +306,4 @@ class HomeViewModel(
         }
     }
 
-}
-
-data class HeatMapData(
-    val date: LocalDate,
-    val count: Int,
-)
-
-enum class HealthStat {
-    STEPS,
-    CALORIES_BURNED,
-    DISTANCE_COVERED,
-    PEAK_HEART_BEAT
 }

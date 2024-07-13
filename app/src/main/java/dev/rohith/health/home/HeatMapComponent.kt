@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
 
-package dev.rohith.health
+package dev.rohith.health.home
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,8 +19,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.rohith.health.data.HeatMapData
 import dev.rohith.health.ui.theme.DarkColorScheme
 
 @Composable
@@ -40,7 +40,7 @@ fun HeatMap(
             val intensity = (it.count / 3f) % 3.0f
             val color =
                 if (intensity == 0.0f) DarkColorScheme.surface else DarkColorScheme.primary.copy(
-                    alpha = intensity
+                    alpha = kotlin.math.min(1f, intensity)
                 )
             var showToolTip by remember {
                 mutableStateOf(false)

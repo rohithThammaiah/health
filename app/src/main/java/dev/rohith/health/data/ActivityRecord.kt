@@ -1,4 +1,4 @@
-package dev.rohith.health
+package dev.rohith.health.data
 
 import java.time.Duration
 import java.time.Instant

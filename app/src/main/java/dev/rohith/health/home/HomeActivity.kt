@@ -1,4 +1,4 @@
-package dev.rohith.health
+package dev.rohith.health.home
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -7,22 +7,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.lifecycleScope
-import com.airbnb.mvrx.Mavericks
-import com.airbnb.mvrx.compose.collectAsState
 import com.airbnb.mvrx.compose.mavericksActivityViewModel
-import com.airbnb.mvrx.compose.mavericksViewModel
-import dev.rohith.health.HealthKitManager.Companion.PERMISSIONS
+import dev.rohith.health.data.HealthKitManager.Companion.PERMISSIONS
 import dev.rohith.health.ui.theme.HealthTheme
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+class HomeActivity : ComponentActivity() {
 
-    val requestPermissionActivityContract =
+    private val requestPermissionActivityContract =
         PermissionController.createRequestPermissionResultContract()
-    val requestPermissions =
+
+    private val requestPermissions =
         registerForActivityResult(requestPermissionActivityContract) { granted ->
             if (granted.containsAll(PERMISSIONS)) {
                 // Permissions successfully granted
@@ -45,7 +42,9 @@ class MainActivity : ComponentActivity() {
                     HomeScreen(
                         allowPermission = {
                             lifecycleScope.launch {
-                                homeViewModel.healthKitManager.checkPermissionsAndRun(homeViewModel.healthConnectClient, requestPermissions)
+                                homeViewModel.healthConnectClient?.let {
+                                    homeViewModel.healthKitManager.checkPermissionsAndRun(it, requestPermissions)
+                                }
                             }
                         })
                 }

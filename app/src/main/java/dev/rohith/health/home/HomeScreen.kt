@@ -3,7 +3,7 @@
     ExperimentalMaterial3Api::class
 )
 
-package dev.rohith.health
+package dev.rohith.health.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
@@ -50,6 +50,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.airbnb.mvrx.compose.collectAsState
 import com.airbnb.mvrx.compose.mavericksActivityViewModel
+import dev.rohith.health.R
+import dev.rohith.health.data.ActivityRecord
+import dev.rohith.health.data.HealthStat
 import dev.rohith.health.ui.theme.DarkColorScheme
 import dev.rohith.health.ui.theme.Typography
 import java.time.Duration

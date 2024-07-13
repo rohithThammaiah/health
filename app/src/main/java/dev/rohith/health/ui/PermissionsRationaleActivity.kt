@@ -1,4 +1,4 @@
-package dev.rohith.health
+package dev.rohith.health.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

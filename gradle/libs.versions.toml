@@ -1,0 +1,52 @@
+[versions]
+kotlin = "1.8.21"
+agp = "8.0.2"
+
+#Android
+core-ktx = "1.13.1"
+lifecycle-runtime-ktx = "2.8.3"
+
+# Compose
+compose = "2024.06.00"
+activity-compose = "1.9.0"
+
+mavericks = "3.0.6"
+
+health-connect = "1.1.0-alpha07"
+
+#Arrow
+arrow-core = "1.2.0-RC"
+arrow-fx-coroutines = "1.2.0-RC"
+
+# Testing
+junit = "4.13.2"
+androidx-junit = "1.2.1"
+espresso-core = "3.6.1"
+
+[plugins]
+kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+agp = { id = "com.android.application", version.ref = "agp" }
+
+[libraries]
+core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
+lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
+activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity-compose" }
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose" }
+compose-ui = { group = "androidx.compose.ui", name = "ui" }
+compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+material3 = { group = "androidx.compose.material3", name = "material3" }
+foundation = { group = "androidx.compose.foundation", name = "foundation" }
+foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout" }
+ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts" }
+mavericks = { group = "com.airbnb.android", name = "mavericks", version.ref = "mavericks" }
+mavericks-compose = { group = "com.airbnb.android", name = "mavericks-compose", version.ref = "mavericks" }
+health-connect = { group = "androidx.health.connect", name = "connect-client", version.ref = "health-connect" }
+arrow-core = { group = "io.arrow-kt", name = "arrow-core", version.ref = "arrow-core" }
+arrow-fx-coroutines = { group = "io.arrow-kt", name = "arrow-fx-coroutines", version.ref = "arrow-fx-coroutines" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-junit" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
+compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }

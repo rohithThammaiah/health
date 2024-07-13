@@ -1,4 +1,4 @@
-package dev.rohith.health
+package dev.rohith.health.data
 
 import java.time.LocalDate
 
@@ -14,13 +14,9 @@ class DateIterator(
     override fun hasNext() = currentDate <= endDateInclusive
 
     override fun next(): LocalDate {
-
         val next = currentDate
-
         currentDate = currentDate.plusDays(stepDays)
-
         return next
-
     }
 
 }

@@ -1,4 +1,4 @@
-package dev.rohith.health
+package dev.rohith.health.data
 
 interface HealthSDKError
 

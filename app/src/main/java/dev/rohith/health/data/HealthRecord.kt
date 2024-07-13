@@ -1,18 +1,10 @@
-package dev.rohith.health
+package dev.rohith.health.data
 
 data class HealthRecord(
     val steps: Record,
     val distanceInMeters: Record,
     val caloriesBurned: Record,
     val maxHeartRate: Record,
-)
-
-data class Record(
-    val name: String,
-    val value: Double,
-    val type: HealthStat,
-    val prettyValue: String = name,
-    val unit: String = "",
 )
 
 fun HealthRecord?.orEmptyRecord(): HealthRecord = this
