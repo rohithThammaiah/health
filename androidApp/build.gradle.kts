@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application) version libs.versions.agp.get()
     alias(libs.plugins.kotlin) version libs.versions.kotlin.get()
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -32,12 +33,6 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
-    }
-    buildFeatures {
-        compose = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.7"
     }
     packagingOptions {
         resources {
