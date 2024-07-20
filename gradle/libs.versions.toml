@@ -1,6 +1,10 @@
 [versions]
-kotlin = "1.8.21"
-agp = "8.0.2"
+kotlin = "1.9.23"
+agp = "8.5.1"
+
+android_sdk_compile = "34"
+android_sdk_target = "34"
+android_sdk_min = "26"
 
 #Android
 core-ktx = "1.13.1"
@@ -25,7 +29,9 @@ espresso-core = "3.6.1"
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-agp = { id = "com.android.application", version.ref = "agp" }
+android_application = { id = "com.android.application", version.ref = "agp" }
+android_library = { id = "com.android.library", version.ref = "agp" }
+kotlin_multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 
 [libraries]
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
@@ -50,3 +56,4 @@ espresso-core = { group = "androidx.test.espresso", name = "espresso-core", vers
 compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+

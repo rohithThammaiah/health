@@ -1,5 +1,6 @@
 @file:OptIn(
-    ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class,
+    ExperimentalMaterial3Api::class,
+    ExperimentalLayoutApi::class,
     ExperimentalMaterial3Api::class
 )
 
@@ -48,26 +49,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.airbnb.mvrx.Async
 import com.airbnb.mvrx.compose.collectAsState
 import com.airbnb.mvrx.compose.mavericksActivityViewModel
 import dev.rohith.health.R
 import dev.rohith.health.data.ActivityRecord
+import dev.rohith.health.data.HealthRecord
 import dev.rohith.health.data.HealthStat
+import dev.rohith.health.data.HeatMapData
 import dev.rohith.health.ui.theme.DarkColorScheme
 import dev.rohith.health.ui.theme.Typography
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.Date
 import kotlin.math.abs
 
 @Composable
 fun HomeScreen(
+    title: String,
+    selectedDate: LocalDate,
+    onDateSelected: (Long) -> Unit,
+    isHealthPermissionEnabled: Boolean,
     allowPermission: () -> Unit,
+    healthRecord: Async<List<RecordUiModel>>,
+    activities: Async<List<ActivityRecord>>,
+    heatMapData: Async<List<HeatMapData>>,
 ) {
-    val homeViewModel: HomeViewModel = mavericksActivityViewModel()
-    val state: HomeState = homeViewModel.collectAsState().value
     Scaffold(
         topBar = {
             Card(
@@ -97,7 +108,7 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.size(8.dp))
                         Text(
-                            text = state.title,
+                            text = title,
                             style = Typography.displayLarge,
                             modifier = Modifier.align(Alignment.Bottom)
                         )
@@ -107,11 +118,11 @@ fun HomeScreen(
                 AnimatedVisibility(visible = isPickerVisible) {
                     val datePickerState =
                         rememberDatePickerState(
-                            initialSelectedDateMillis = state.selectedDate.atStartOfDay().toInstant(
+                            initialSelectedDateMillis = selectedDate.atStartOfDay().toInstant(
                                 ZoneOffset.UTC
                             ).toEpochMilli()
                         )
-                    homeViewModel.setSelectedDate(datePickerState.selectedDateMillis)
+                    datePickerState.selectedDateMillis?.let { onDateSelected.invoke(it) }
                     DatePicker(
                         state = datePickerState,
                         title = null,
@@ -121,97 +132,22 @@ fun HomeScreen(
                 }
             }
         },
-        bottomBar = {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(0.dp),
-                shape = RoundedCornerShape(0.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(0.dp),
-                        shape = RoundedCornerShape(0.dp),
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Card(
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
-                            ) {
-                                Icon(
-                                    painter = painterResource(
-                                        id = R.drawable.ic_show_chart_24
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.size(4.dp))
-                            Text(text = "Fitness", style = Typography.labelLarge)
-                        }
-                    }
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(0.dp),
-                        shape = RoundedCornerShape(0.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                painter = painterResource(
-                                    id = R.drawable.ic_food_bank_24
-                                ),
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.size(4.dp))
-                            Text(text = "Nutrition", style = Typography.labelLarge)
-                        }
-                    }
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(0.dp),
-                        shape = RoundedCornerShape(0.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                painter = painterResource(
-                                    id = R.drawable.ic_water_drop_24
-                                ),
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.size(4.dp))
-                            Text(text = "Hydro", style = Typography.labelLarge)
-                        }
-                    }
-
-                }
-            }
-        }
     ) {
         Column(
             modifier = Modifier
                 .padding(it)
                 .fillMaxSize(),
         ) {
-            if (state.isHealthSDKPermissionGranted.invoke() != true) {
-                Button(
-                    onClick = allowPermission,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+            if (isHealthPermissionEnabled.not()) {
+                Box(
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Text(text = "Give Health Connect permission")
+                    Button(
+                        onClick = allowPermission,
+                        modifier = Modifier.align(Alignment.Center)
+                    ) {
+                        Text(text = "Give Health Connect permission")
+                    }
                 }
             } else {
                 LazyColumn {
@@ -226,7 +162,7 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier.padding(horizontal = 16.dp),
                         ) {
-                            state.healthRecord.invoke()?.forEach { record ->
+                            healthRecord.invoke()?.forEach { record ->
                                 StatUiModel(healthRecord = record)
                             }
                         }
@@ -246,7 +182,7 @@ fun HomeScreen(
                     }
 
 
-                    items(state.activities.invoke() ?: emptyList()) { activity ->
+                    items(activities.invoke() ?: emptyList()) { activity ->
                         ActivityUiModel(activity = activity)
                     }
 
@@ -257,7 +193,7 @@ fun HomeScreen(
                     item {
                         HeatMap(
                             modifier = Modifier.padding(horizontal = 16.dp),
-                            heatMapData = state.heatMapData.invoke() ?: emptyList(),
+                            heatMapData = heatMapData.invoke() ?: emptyList(),
                         )
                     }
 

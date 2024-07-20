@@ -25,6 +25,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 import kotlin.math.roundToInt
 
 data class HomeState(
@@ -124,6 +125,7 @@ class HomeViewModel(
                                         name = it.name,
                                         value = "${
                                             String.format(
+                                                Locale.getDefault(),
                                                 "%.3f",
                                                 (it.value / 1000.0)
                                             )
@@ -137,7 +139,13 @@ class HomeViewModel(
                                 HealthStat.DISTANCE_COVERED -> {
                                     RecordUiModel(
                                         name = it.name,
-                                        value = "${String.format("%.3f", (it.value / 1000.0))} Kms",
+                                        value = "${
+                                            String.format(
+                                                Locale.getDefault(),
+                                                "%.3f",
+                                                (it.value / 1000.0)
+                                            )
+                                        } Kms",
                                         background = DarkColorScheme.surface,
                                         onBackground = DarkColorScheme.onSurface,
                                         icon = R.drawable.ic_map_24,
@@ -190,6 +198,7 @@ class HomeViewModel(
 
                             HealthStat.DISTANCE_COVERED -> it.copy(
                                 prettyValue = String.format(
+                                    Locale.getDefault(),
                                     "%.2f",
                                     (it.value / 1000.0)
                                 ), unit = "km"
@@ -218,9 +227,10 @@ class HomeViewModel(
     fun setSelectedDate(selectedDateMillis: Long?) {
         if (selectedDateMillis == null) return
         withState {
-            val previouslySelectedTime = it.selectedDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
+            val previouslySelectedTime =
+                it.selectedDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
             if (selectedDateMillis == previouslySelectedTime)
-             return@withState
+                return@withState
             val dateFromMillis = LocalDateTime.from(
                 Instant.ofEpochMilli(selectedDateMillis).atZone(ZoneId.systemDefault())
             ).toLocalDate()
@@ -254,6 +264,7 @@ class HomeViewModel(
 
                         HealthStat.DISTANCE_COVERED -> it.copy(
                             prettyValue = String.format(
+                                Locale.getDefault(),
                                 "%.2f",
                                 (it.value / 1000.0)
                             ), unit = "km"
@@ -278,15 +289,14 @@ class HomeViewModel(
             val dates = mutableListOf<HeatMapData>()
 
             for (date in pastEightWeek.toLocalDate()..today.toLocalDate()) {
-                Log.e("Date", date.toString())
-                dates.add(
+                val data =
                     HeatMapData(
                         date = date,
-                        count = activitiesByDate.get(
-                            date.atStartOfDay().toInstant(ZoneOffset.UTC)
-                        )?.size ?: 0
+                        count = activitiesByDate[date.atStartOfDay()
+                            .toInstant(ZoneOffset.UTC)]?.size ?: 0
                     )
-                )
+                Log.e("Date", data.toString())
+                dates.add(data)
             }
 
             setState {
